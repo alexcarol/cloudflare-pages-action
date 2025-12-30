@@ -1,10 +1,10 @@
-name: 'Sync Cloudflare Pages'
-description: 'Syncs cloudflare.json configuration to Cloudflare Pages with GitHub integration'
+name: 'Sync Cloudflare Pages & Workers'
+description: 'Syncs cloudflare.json configuration to Cloudflare Pages and Workers with GitHub integration'
 author: 'alexcarol'
 
 inputs:
   cloudflare-api-token:
-    description: 'Cloudflare API token with Pages permissions'
+    description: 'Cloudflare API token with Pages and Workers permissions'
     required: true
   cloudflare-account-id:
     description: 'Cloudflare Account ID'
@@ -17,6 +17,29 @@ inputs:
     description: 'Allow deleting and recreating Direct Upload projects for GitHub migration'
     required: false
     default: 'false'
+  deploy-worker:
+    description: 'Whether to deploy worker. Set to "false" to skip worker deployment.'
+    required: false
+    default: 'true'
+  worker-secrets:
+    description: 'JSON object of worker secrets (key-value pairs). Values should come from GitHub Secrets.'
+    required: false
+    default: '{}'
+  branch:
+    description: 'Branch name for preview deployments. Auto-detected from GITHUB_REF if not provided.'
+    required: false
+    default: ''
+
+outputs:
+  pages-url:
+    description: 'The Pages deployment URL'
+    value: ${{ steps.sync.outputs.pages-url }}
+  worker-url:
+    description: 'The Worker deployment URL'
+    value: ${{ steps.sync.outputs.worker-url }}
+  worker-name:
+    description: 'The deployed worker name (may include branch prefix for previews)'
+    value: ${{ steps.sync.outputs.worker-name }}
 
 runs:
   using: 'composite'
@@ -32,12 +55,16 @@ runs:
       working-directory: ${{ github.action_path }}
 
     - name: Sync Cloudflare configuration
+      id: sync
       shell: bash
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
         CONFIG_PATH: ${{ github.workspace }}/${{ inputs.config-path }}
         ALLOW_RECREATE: ${{ inputs.allow-recreate }}
+        DEPLOY_WORKER: ${{ inputs.deploy-worker }}
+        WORKER_SECRETS: ${{ inputs.worker-secrets }}
+        BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
       run: node ${{ github.action_path }}/sync-cloudflare.mjs
 
 branding:
