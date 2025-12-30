@@ -4,14 +4,24 @@ A GitHub Action that syncs your `cloudflare.json` configuration to Cloudflare Pa
 
 ## Features
 
-- **Pages Configuration as Code**: Define your Cloudflare Pages project settings in `cloudflare.json`
-- **Workers Deployment**: Deploy Cloudflare Workers alongside your Pages project
-- **Branch-based Previews**: Automatically deploy branch-specific workers for preview environments
+- **Simple Configuration**: Minimal config with smart defaults - just specify your project name
+- **Auto-detect Workers**: If a `worker/` folder exists, worker deployment is enabled automatically
+- **Branch-based Previews**: Both Pages and Workers deploy branch-specific previews by default
 - **Bindings Support**: Configure environment variables, secrets, KV, D1, and R2 bindings
 
-## Usage
+## Quick Start
 
-### Basic Usage (Pages only)
+### Minimal Setup
+
+1. Create `cloudflare.json` in your repo root:
+
+```json
+{
+  "name": "my-project"
+}
+```
+
+2. Add the workflow:
 
 ```yaml
 - name: Deploy to Cloudflare
@@ -21,7 +31,12 @@ A GitHub Action that syncs your `cloudflare.json` configuration to Cloudflare Pa
     cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 ```
 
-### With Workers
+That's it! The action will:
+- Build with `npm run build` and deploy from `dist/`
+- Auto-detect and deploy any `worker/worker.js`
+- Enable branch previews for both Pages and Workers
+
+### With Worker Secrets
 
 ```yaml
 - name: Deploy to Cloudflare
@@ -58,55 +73,45 @@ A GitHub Action that syncs your `cloudflare.json` configuration to Cloudflare Pa
 
 ## Configuration
 
-Create a `cloudflare.json` file in your repository root:
+Create a `cloudflare.json` file in your repository root. Most fields are optional with sensible defaults.
 
-### Pages Only
+### Minimal (with worker/ folder auto-detected)
+
+```json
+{
+  "name": "my-project"
+}
+```
+
+This is equivalent to the full configuration below when a `worker/` folder exists.
+
+### Full Configuration (all defaults shown)
 
 ```json
 {
   "name": "my-project",
-  "repo": {
-    "owner": "your-username",
-    "name": "your-repo"
-  },
   "production_branch": "main",
   "build": {
     "command": "npm run build",
-    "output": "dist",
-    "root": ""
+    "output": "dist"
   },
-  "preview": {
-    "branches": ["*"],
-    "exclude": []
+  "worker": {
+    "name": "my-project",
+    "main": "worker/worker.js",
+    "deploy_previews": true
   }
 }
 ```
 
-### Pages + Workers
+### With Worker Bindings
 
 ```json
 {
   "name": "my-project",
-  "repo": {
-    "owner": "your-username",
-    "name": "your-repo"
-  },
-  "production_branch": "main",
-  "build": {
-    "command": "npm run build",
-    "output": "dist",
-    "root": ""
-  },
   "worker": {
-    "name": "my-worker",
-    "main": "dist/worker.js",
-    "build_command": "npm run build:worker",
-    "compatibility_date": "2024-01-01",
-    "deploy_previews": true,
     "bindings": {
       "environment_variables": {
-        "API_URL": "https://api.example.com",
-        "ENVIRONMENT": "production"
+        "API_URL": "https://api.example.com"
       },
       "kv_namespaces": [
         { "binding": "CACHE", "id": "your-kv-namespace-id" }
@@ -126,30 +131,30 @@ Create a `cloudflare.json` file in your repository root:
 
 ### Root Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Cloudflare Pages project name |
-| `repo.owner` | string | Yes | GitHub repository owner |
-| `repo.name` | string | Yes | GitHub repository name |
-| `production_branch` | string | Yes | Branch to use for production deployments |
-| `build.command` | string | No | Build command for Pages |
-| `build.output` | string | No | Output directory for built files |
-| `build.root` | string | No | Root directory for the build |
-| `preview.branches` | string[] | No | Branches to deploy previews for (default: `["*"]`) |
-| `preview.exclude` | string[] | No | Branches to exclude from preview deployments |
-| `allow_recreate` | boolean | No | Allow recreating Direct Upload projects |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `name` | string | Yes | - | Cloudflare Pages project name |
+| `repo.owner` | string | No | Auto-detected | GitHub repository owner |
+| `repo.name` | string | No | Auto-detected | GitHub repository name |
+| `production_branch` | string | No | `"main"` | Branch for production deployments |
+| `build.command` | string | No | `"npm run build"` | Build command for Pages |
+| `build.output` | string | No | `"dist"` | Output directory for built files |
+| `build.root` | string | No | `""` | Root directory for the build |
+| `preview.branches` | string[] | No | `["*"]` | Branches to deploy previews for |
+| `preview.exclude` | string[] | No | `[]` | Branches to exclude from previews |
 
 ### Worker Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `worker.name` | string | Yes | Base name for the worker |
-| `worker.main` | string | Yes | Path to the worker entry point (bundled output) |
-| `worker.build_command` | string | No | Command to build/bundle the worker |
-| `worker.compatibility_date` | string | Yes | Workers runtime compatibility date |
-| `worker.compatibility_flags` | string[] | No | Workers runtime feature flags |
-| `worker.deploy_previews` | boolean | No | Deploy branch-specific workers for previews (default: `true`) |
-| `worker.bindings` | object | No | Worker bindings configuration |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `worker` | object | No | Auto-detected | Worker config (auto-enabled if `worker/` folder exists) |
+| `worker.name` | string | No | Same as `name` | Base name for the worker |
+| `worker.main` | string | No | `"worker/worker.js"` | Path to worker entry point |
+| `worker.build_command` | string | No | - | Command to build the worker |
+| `worker.compatibility_date` | string | No | Today's date | Workers runtime compatibility date |
+| `worker.compatibility_flags` | string[] | No | `[]` | Workers runtime feature flags |
+| `worker.deploy_previews` | boolean | No | `true` | Deploy branch-specific preview workers |
+| `worker.bindings` | object | No | - | Worker bindings configuration |
 
 ### Worker Bindings
 
@@ -173,6 +178,78 @@ For preview deployments, workers are named with a branch prefix:
 | `fix/bug-123` | `fix-bug-123-my-worker` |
 
 Branch names are normalized: `/` becomes `-`, uppercase becomes lowercase.
+
+## Accessing Branch Worker URLs
+
+The action outputs the worker URL for use in subsequent steps. You can also access the branch-specific worker URL from your Pages deployment.
+
+### Using Action Outputs
+
+```yaml
+- name: Deploy to Cloudflare
+  id: deploy
+  uses: alexcarol/cloudflare-pages-action@v1
+  with:
+    cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+- name: Use Worker URL
+  run: |
+    echo "Worker URL: ${{ steps.deploy.outputs.worker-url }}"
+    echo "Worker Name: ${{ steps.deploy.outputs.worker-name }}"
+```
+
+### From Your Pages Application
+
+Since Pages builds happen on Cloudflare's infrastructure via GitHub integration, the worker URL must be determined at runtime. There are two approaches:
+
+#### Option 1: Use CF_PAGES_BRANCH Environment Variable (Recommended)
+
+Cloudflare Pages exposes the `CF_PAGES_BRANCH` environment variable during builds. Use this to construct the worker URL dynamically:
+
+```javascript
+// worker-config.js
+const WORKER_SUBDOMAIN = 'your-subdomain'; // Your workers.dev subdomain
+const WORKER_BASE_NAME = 'my-project';
+const PRODUCTION_BRANCH = 'main';
+
+function getWorkerUrl() {
+  const branch = typeof process !== 'undefined'
+    ? process.env.CF_PAGES_BRANCH
+    : null;
+
+  // Production: use base worker name
+  if (!branch || branch === PRODUCTION_BRANCH) {
+    return `https://${WORKER_BASE_NAME}.${WORKER_SUBDOMAIN}.workers.dev`;
+  }
+
+  // Preview: use branch-prefixed worker name
+  const normalizedBranch = branch.replace(/\//g, '-').toLowerCase();
+  return `https://${normalizedBranch}-${WORKER_BASE_NAME}.${WORKER_SUBDOMAIN}.workers.dev`;
+}
+
+export const WORKER_URL = getWorkerUrl();
+```
+
+#### Option 2: Inline Worker URL in HTML
+
+In your workflow, after deployment, inject the worker URL into your built HTML:
+
+```yaml
+- name: Deploy to Cloudflare
+  id: deploy
+  uses: alexcarol/cloudflare-pages-action@v1
+  with:
+    cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+# Note: For GitHub-integrated Pages, builds happen on Cloudflare's side.
+# The action outputs are available for PR comments, other integrations, etc.
+- name: Comment PR with URLs
+  if: github.event_name == 'pull_request'
+  run: |
+    echo "Worker URL for this branch: ${{ steps.deploy.outputs.worker-url }}"
+```
 
 ## API Token Permissions
 

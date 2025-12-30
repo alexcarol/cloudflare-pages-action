@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { dirname } from 'path';
 import { syncPages } from './lib/pages.mjs';
 import { syncWorker } from './lib/workers.mjs';
+import { applyDefaults, getRepoInfoFromEnv } from './lib/defaults.mjs';
 
 async function main() {
   // Read environment variables
@@ -33,12 +34,14 @@ async function main() {
     process.exit(1);
   }
 
-  // Load configuration
-  const config = JSON.parse(readFileSync(configPath, 'utf-8'));
-  const allowRecreate = allowRecreateEnv || config.allow_recreate === true;
-
   // Get working directory (parent of config file)
   const workingDir = dirname(configPath);
+
+  // Load configuration and apply defaults
+  const rawConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+  const repoInfo = getRepoInfoFromEnv();
+  const config = applyDefaults(rawConfig, workingDir, repoInfo || {});
+  const allowRecreate = allowRecreateEnv || config.allow_recreate === true;
 
   console.log('==================================================');
   console.log('Cloudflare Pages & Workers Sync');
