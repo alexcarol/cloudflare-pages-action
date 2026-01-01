@@ -339,20 +339,27 @@ If you have an existing Pages project created via Direct Upload (wrangler pages 
 
 ## Releasing (for maintainers)
 
-This action uses automated versioning. When you publish a release, the major version tag (e.g., `v1`) is automatically updated to point to the new release.
+### Development (v0.x.x) - Fully Automated
 
-### To create a new release:
+Every push to `main` automatically:
+1. Runs tests
+2. Creates a new patch release (`v0.1.0` → `v0.1.1` → `v0.1.2`...)
+3. Updates the `v0` floating tag
+
+During development, users can reference:
+```yaml
+uses: alexcarol/cloudflare-pages-action@v0  # Latest v0.x.x
+```
+
+### Stable Release (v1+)
+
+When ready for stable release:
 
 1. Go to **Releases** → **Create a new release**
-2. Create a new tag following semantic versioning: `v1.0.0`, `v1.1.0`, `v1.2.3`, etc.
-3. Write release notes describing the changes
-4. Click **Publish release**
+2. Create tag `v1.0.0` (or `v1.1.0`, `v2.0.0`, etc.)
+3. Click **Publish release**
 
-The [release workflow](.github/workflows/release.yml) will automatically:
-- Run tests to verify the release
-- Update the major version tag (`v1`) to point to this release
-
-Users referencing `@v1` will automatically get the latest release.
+The [release workflow](.github/workflows/release.yml) will automatically update the major version tag (`v1`) to point to this release.
 
 ### Breaking changes
 
