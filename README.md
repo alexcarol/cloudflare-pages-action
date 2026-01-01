@@ -28,7 +28,7 @@ A GitHub Action that syncs your `cloudflare.json` configuration to Cloudflare Pa
   uses: alexcarol/cloudflare-pages-action@v1
   with:
     cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 ```
 
 That's it! The action will:
@@ -43,7 +43,7 @@ That's it! The action will:
   uses: alexcarol/cloudflare-pages-action@v1
   with:
     cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     worker-secrets: |
       {
         "API_KEY": "${{ secrets.API_KEY }}",
@@ -191,7 +191,7 @@ The action outputs the worker URL for use in subsequent steps. You can also acce
   uses: alexcarol/cloudflare-pages-action@v1
   with:
     cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
 - name: Use Worker URL
   run: |
@@ -241,7 +241,7 @@ In your workflow, after deployment, inject the worker URL into your built HTML:
   uses: alexcarol/cloudflare-pages-action@v1
   with:
     cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
 # Note: For GitHub-integrated Pages, builds happen on Cloudflare's side.
 # The action outputs are available for PR comments, other integrations, etc.
@@ -292,7 +292,7 @@ jobs:
         uses: alexcarol/cloudflare-pages-action@v1
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           worker-secrets: |
             {
               "API_KEY": "${{ secrets.API_KEY }}"
@@ -318,7 +318,7 @@ jobs:
   uses: alexcarol/cloudflare-pages-action@v1
   with:
     cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     deploy-worker: 'false'
 ```
 
@@ -331,7 +331,7 @@ If you have an existing Pages project created via Direct Upload (wrangler pages 
   uses: alexcarol/cloudflare-pages-action@v1
   with:
     cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     allow-recreate: 'true'
 ```
 
