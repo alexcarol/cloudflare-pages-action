@@ -337,6 +337,34 @@ If you have an existing Pages project created via Direct Upload (wrangler pages 
 
 **Warning**: This will delete and recreate the project, losing deployment history.
 
+## Releasing (for maintainers)
+
+### Development (v0.x.x) - Fully Automated
+
+Every push to `main` automatically:
+1. Runs tests
+2. Creates a new patch release (`v0.1.0` → `v0.1.1` → `v0.1.2`...)
+3. Updates the `v0` floating tag
+
+During development, users can reference:
+```yaml
+uses: alexcarol/cloudflare-pages-action@v0  # Latest v0.x.x
+```
+
+### Stable Release (v1+)
+
+When ready for stable release:
+
+1. Go to **Releases** → **Create a new release**
+2. Create tag `v1.0.0` (or `v1.1.0`, `v2.0.0`, etc.)
+3. Click **Publish release**
+
+The [release workflow](.github/workflows/release.yml) will automatically update the major version tag (`v1`) to point to this release.
+
+### Breaking changes
+
+For breaking changes, create a new major version (e.g., `v2.0.0`). The workflow will create a new `v2` tag automatically.
+
 ## License
 
 MIT
