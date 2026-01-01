@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  # Run tests before updating tags
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  # Update major version tag (e.g., v1) to point to this release
+  update-major-tag:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update major version tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the tag from the release
+          TAG="${GITHUB_REF#refs/tags/}"
+
+          # Extract major version (v1 from v1.2.3)
+          if [[ "$TAG" =~ ^v([0-9]+) ]]; then
+            MAJOR="v${BASH_REMATCH[1]}"
+
+            echo "Release tag: $TAG"
+            echo "Major version: $MAJOR"
+
+            # Configure git
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            # Delete the existing major tag if it exists
+            git tag -d "$MAJOR" 2>/dev/null || true
+            git push origin ":refs/tags/$MAJOR" 2>/dev/null || true
+
+            # Create and push the new major tag pointing to this release
+            git tag "$MAJOR" "$TAG"
+            git push origin "$MAJOR"
+
+            echo "✅ Updated $MAJOR to point to $TAG"
+          else
+            echo "❌ Tag '$TAG' does not match expected format (vX.Y.Z)"
+            exit 1
+          fi

@@ -337,6 +337,27 @@ If you have an existing Pages project created via Direct Upload (wrangler pages 
 
 **Warning**: This will delete and recreate the project, losing deployment history.
 
+## Releasing (for maintainers)
+
+This action uses automated versioning. When you publish a release, the major version tag (e.g., `v1`) is automatically updated to point to the new release.
+
+### To create a new release:
+
+1. Go to **Releases** → **Create a new release**
+2. Create a new tag following semantic versioning: `v1.0.0`, `v1.1.0`, `v1.2.3`, etc.
+3. Write release notes describing the changes
+4. Click **Publish release**
+
+The [release workflow](.github/workflows/release.yml) will automatically:
+- Run tests to verify the release
+- Update the major version tag (`v1`) to point to this release
+
+Users referencing `@v1` will automatically get the latest release.
+
+### Breaking changes
+
+For breaking changes, create a new major version (e.g., `v2.0.0`). The workflow will create a new `v2` tag automatically.
+
 ## License
 
 MIT
