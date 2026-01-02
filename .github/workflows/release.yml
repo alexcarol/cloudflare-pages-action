@@ -53,6 +53,9 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
 
+            # Fetch the newly created release tag from remote
+            git fetch origin "$TAG:$TAG"
+
             # Delete the existing major tag if it exists
             git tag -d "$MAJOR" 2>/dev/null || true
             git push origin ":refs/tags/$MAJOR" 2>/dev/null || true

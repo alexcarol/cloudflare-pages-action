@@ -76,6 +76,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Fetch the newly created version tag from remote
+          git fetch origin "$VERSION:$VERSION"
+
           # Delete existing v0 tag if it exists
           git tag -d v0 2>/dev/null || true
           git push origin :refs/tags/v0 2>/dev/null || true
