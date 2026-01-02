@@ -135,20 +135,12 @@ describe('defaults', () => {
     it('should apply worker defaults when worker config is provided', () => {
       const config = {
         name: 'my-app',
-        worker: { name: 'custom-worker' },
+        worker: { main: 'custom/worker.js' },
       };
       const result = applyDefaults(config, '/working/dir');
-      expect(result.worker.name).toBe('custom-worker');
-      expect(result.worker.main).toBe('worker/worker.js');
+      expect(result.worker.main).toBe('custom/worker.js');
       expect(result.worker.deploy_previews).toBe(true);
       expect(result.worker.compatibility_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    });
-
-    it('should use project name as default worker name', () => {
-      existsSync.mockReturnValue(true);
-      const config = { name: 'my-app' };
-      const result = applyDefaults(config, '/working/dir');
-      expect(result.worker.name).toBe('my-app');
     });
   });
 
