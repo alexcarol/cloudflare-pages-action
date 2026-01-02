@@ -169,10 +169,10 @@ describe('workers', () => {
       const result = await syncWorker(mockClient, 'account-id', config, 'main', null, '/working');
 
       expect(result).toEqual({
-        workerName: 'my-worker',
-        workerUrl: 'https://my-worker.myaccount.workers.dev',
+        workerName: 'my-app',
+        workerUrl: 'https://my-app.myaccount.workers.dev',
       });
-      expect(mockClient.workers.scripts.update).toHaveBeenCalledWith('my-worker', expect.any(Object));
+      expect(mockClient.workers.scripts.update).toHaveBeenCalledWith('my-app', expect.any(Object));
     });
 
     it('should deploy to preview with branch-prefixed worker name', async () => {
@@ -188,10 +188,10 @@ describe('workers', () => {
       const result = await syncWorker(mockClient, 'account-id', config, 'feature/auth', null, '/working');
 
       expect(result).toEqual({
-        workerName: 'feature-auth-my-worker',
-        workerUrl: 'https://feature-auth-my-worker.myaccount.workers.dev',
+        workerName: 'feature-auth-my-app',
+        workerUrl: 'https://feature-auth-my-app.myaccount.workers.dev',
       });
-      expect(mockClient.workers.scripts.update).toHaveBeenCalledWith('feature-auth-my-worker', expect.any(Object));
+      expect(mockClient.workers.scripts.update).toHaveBeenCalledWith('feature-auth-my-app', expect.any(Object));
     });
 
     it('should include bindings in deployment', async () => {
@@ -212,7 +212,7 @@ describe('workers', () => {
       await syncWorker(mockClient, 'account-id', config, 'main', secrets, '/working');
 
       expect(mockClient.workers.scripts.update).toHaveBeenCalledWith(
-        'my-worker',
+        'my-app',
         expect.objectContaining({
           metadata: expect.objectContaining({
             bindings: expect.arrayContaining([

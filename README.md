@@ -96,7 +96,6 @@ This is equivalent to the full configuration below when a `worker/` folder exist
     "output": "dist"
   },
   "worker": {
-    "name": "my-project",
     "main": "worker/worker.js",
     "deploy_previews": true
   }
@@ -148,7 +147,6 @@ This is equivalent to the full configuration below when a `worker/` folder exist
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `worker` | object | No | Auto-detected | Worker config (auto-enabled if `worker/` folder exists) |
-| `worker.name` | string | No | Same as `name` | Base name for the worker |
 | `worker.main` | string | No | `"worker/worker.js"` | Path to worker entry point |
 | `worker.build_command` | string | No | - | Command to build the worker |
 | `worker.compatibility_date` | string | No | Today's date | Workers runtime compatibility date |
@@ -169,13 +167,13 @@ Secrets should be passed via the `worker-secrets` action input, not in `cloudfla
 
 ## Branch-based Worker Naming
 
-For preview deployments, workers are named with a branch prefix:
+Workers use the same base name as the Pages project for consistency. For preview deployments, workers are named with a branch prefix:
 
 | Branch | Worker Name |
 |--------|-------------|
-| `main` (production) | `my-worker` |
-| `feature/auth` | `feature-auth-my-worker` |
-| `fix/bug-123` | `fix-bug-123-my-worker` |
+| `main` (production) | `my-project` |
+| `feature/auth` | `feature-auth-my-project` |
+| `fix/bug-123` | `fix-bug-123-my-project` |
 
 Branch names are normalized: `/` becomes `-`, uppercase becomes lowercase.
 
@@ -210,7 +208,7 @@ Cloudflare Pages exposes the `CF_PAGES_BRANCH` environment variable during build
 ```javascript
 // worker-config.js
 const WORKER_SUBDOMAIN = 'your-subdomain'; // Your workers.dev subdomain
-const WORKER_BASE_NAME = 'my-project';
+const PAGES_PROJECT_NAME = 'my-project'; // Same as the "name" field in cloudflare.json
 const PRODUCTION_BRANCH = 'main';
 
 function getWorkerUrl() {
@@ -218,14 +216,14 @@ function getWorkerUrl() {
     ? process.env.CF_PAGES_BRANCH
     : null;
 
-  // Production: use base worker name
+  // Production: use Pages project name
   if (!branch || branch === PRODUCTION_BRANCH) {
-    return `https://${WORKER_BASE_NAME}.${WORKER_SUBDOMAIN}.workers.dev`;
+    return `https://${PAGES_PROJECT_NAME}.${WORKER_SUBDOMAIN}.workers.dev`;
   }
 
   // Preview: use branch-prefixed worker name
   const normalizedBranch = branch.replace(/\//g, '-').toLowerCase();
-  return `https://${normalizedBranch}-${WORKER_BASE_NAME}.${WORKER_SUBDOMAIN}.workers.dev`;
+  return `https://${normalizedBranch}-${PAGES_PROJECT_NAME}.${WORKER_SUBDOMAIN}.workers.dev`;
 }
 
 export const WORKER_URL = getWorkerUrl();
