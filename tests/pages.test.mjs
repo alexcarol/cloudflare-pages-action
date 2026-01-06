@@ -317,8 +317,8 @@ describe('pages', () => {
     });
   });
 
-  describe('fallback URL when subdomain not in response', () => {
-    it('should use constructed URL when subdomain is not available', async () => {
+  describe('error when subdomain not in response', () => {
+    it('should throw error when subdomain is not available', async () => {
       const error = new Error('Not Found');
       error.status = 404;
       mockClient.pages.projects.get
@@ -329,9 +329,11 @@ describe('pages', () => {
           // No subdomain field
         });
 
-      const result = await syncPages(mockClient, 'account-id', baseConfig, false);
+      await expect(syncPages(mockClient, 'account-id', baseConfig, false))
+        .rejects.toThrow('Cloudflare API did not return subdomain field for Pages project');
 
-      expect(result).toEqual({ pagesUrl: 'https://my-project.pages.dev' });
+      // Verify the project was still created before the error
+      expect(mockClient.pages.projects.create).toHaveBeenCalled();
     });
   });
 });
