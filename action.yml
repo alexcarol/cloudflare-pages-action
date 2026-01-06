@@ -25,10 +25,6 @@ inputs:
     description: 'JSON object of worker secrets (key-value pairs). Values should come from GitHub Secrets.'
     required: false
     default: '{}'
-  branch:
-    description: 'Branch name for preview deployments. Auto-detected from GITHUB_REF if not provided.'
-    required: false
-    default: ''
 
 outputs:
   pages-url:
@@ -64,7 +60,6 @@ runs:
         ALLOW_RECREATE: ${{ inputs.allow-recreate }}
         DEPLOY_WORKER: ${{ inputs.deploy-worker }}
         WORKER_SECRETS: ${{ inputs.worker-secrets }}
-        BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
       run: node ${{ github.action_path }}/sync-cloudflare.mjs
 
 branding:
