@@ -212,5 +212,25 @@ describe('workers', () => {
       await expect(syncWorker(mockClient, 'account-id', config, null, '/working'))
         .rejects.toThrow('ENOENT');
     });
+
+    it('should throw error if subdomain not returned by API', async () => {
+      mockClient.workers.subdomains.get.mockResolvedValue({});
+
+      const config = {
+        name: 'my-app',
+        production_branch: 'main',
+        worker: {
+          name: 'my-worker',
+          main: 'worker/worker.js',
+          compatibility_date: '2024-01-01',
+        },
+      };
+
+      await expect(syncWorker(mockClient, 'account-id', config, null, '/working'))
+        .rejects.toThrow('Cloudflare API did not return subdomain field for Workers');
+
+      // Verify the worker was still deployed before the error
+      expect(mockClient.workers.scripts.update).toHaveBeenCalled();
+    });
   });
 });
