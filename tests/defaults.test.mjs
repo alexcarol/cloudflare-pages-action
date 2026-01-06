@@ -122,7 +122,6 @@ describe('defaults', () => {
       const result = applyDefaults(config, '/working/dir');
       expect(result.worker).toBeDefined();
       expect(result.worker.main).toBe('worker/worker.js');
-      expect(result.worker.deploy_previews).toBe(true);
     });
 
     it('should not add worker config if folder does not exist', () => {
@@ -139,7 +138,6 @@ describe('defaults', () => {
       };
       const result = applyDefaults(config, '/working/dir');
       expect(result.worker.main).toBe('custom/worker.js');
-      expect(result.worker.deploy_previews).toBe(true);
       expect(result.worker.compatibility_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
   });

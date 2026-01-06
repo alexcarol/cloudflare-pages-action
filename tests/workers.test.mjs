@@ -140,23 +140,12 @@ describe('workers', () => {
 
     it('should return null if no worker configuration', async () => {
       const config = { name: 'my-app', production_branch: 'main' };
-      const result = await syncWorker(mockClient, 'account-id', config, 'main', null, '/working');
+      const result = await syncWorker(mockClient, 'account-id', config, null, '/working');
       expect(result).toBeNull();
       expect(mockClient.workers.scripts.update).not.toHaveBeenCalled();
     });
 
-    it('should skip preview deployment when deploy_previews is false', async () => {
-      const config = {
-        name: 'my-app',
-        production_branch: 'main',
-        worker: { name: 'my-worker', main: 'worker/worker.js', deploy_previews: false },
-      };
-      const result = await syncWorker(mockClient, 'account-id', config, 'feature/auth', null, '/working');
-      expect(result).toBeNull();
-      expect(mockClient.workers.scripts.update).not.toHaveBeenCalled();
-    });
-
-    it('should deploy to production with base worker name', async () => {
+    it('should deploy worker with project name', async () => {
       const config = {
         name: 'my-app',
         production_branch: 'main',
@@ -166,32 +155,13 @@ describe('workers', () => {
           compatibility_date: '2024-01-01',
         },
       };
-      const result = await syncWorker(mockClient, 'account-id', config, 'main', null, '/working');
+      const result = await syncWorker(mockClient, 'account-id', config, null, '/working');
 
       expect(result).toEqual({
         workerName: 'my-app',
         workerUrl: 'https://my-app.myaccount.workers.dev',
       });
       expect(mockClient.workers.scripts.update).toHaveBeenCalledWith('my-app', expect.any(Object));
-    });
-
-    it('should deploy to preview with branch-prefixed worker name', async () => {
-      const config = {
-        name: 'my-app',
-        production_branch: 'main',
-        worker: {
-          name: 'my-worker',
-          main: 'worker/worker.js',
-          compatibility_date: '2024-01-01',
-        },
-      };
-      const result = await syncWorker(mockClient, 'account-id', config, 'feature/auth', null, '/working');
-
-      expect(result).toEqual({
-        workerName: 'feature-auth-my-app',
-        workerUrl: 'https://feature-auth-my-app.myaccount.workers.dev',
-      });
-      expect(mockClient.workers.scripts.update).toHaveBeenCalledWith('feature-auth-my-app', expect.any(Object));
     });
 
     it('should include bindings in deployment', async () => {
@@ -209,7 +179,7 @@ describe('workers', () => {
       };
       const secrets = { API_KEY: 'secret-123' };
 
-      await syncWorker(mockClient, 'account-id', config, 'main', secrets, '/working');
+      await syncWorker(mockClient, 'account-id', config, secrets, '/working');
 
       expect(mockClient.workers.scripts.update).toHaveBeenCalledWith(
         'my-app',
@@ -239,7 +209,7 @@ describe('workers', () => {
         },
       };
 
-      await expect(syncWorker(mockClient, 'account-id', config, 'main', null, '/working'))
+      await expect(syncWorker(mockClient, 'account-id', config, null, '/working'))
         .rejects.toThrow('ENOENT');
     });
   });

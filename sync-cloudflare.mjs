@@ -13,7 +13,6 @@ async function main() {
   const configPath = process.env.CONFIG_PATH;
   const allowRecreateEnv = process.env.ALLOW_RECREATE === 'true';
   const deployWorker = process.env.DEPLOY_WORKER !== 'false';
-  const branch = process.env.BRANCH || 'main';
 
   // Parse worker secrets from JSON
   let workerSecrets = {};
@@ -46,7 +45,6 @@ async function main() {
   console.log('==================================================');
   console.log('Cloudflare Pages & Workers Sync');
   console.log('==================================================');
-  console.log(`Branch: ${branch}`);
   console.log(`Production branch: ${config.production_branch}`);
 
   // Initialize Cloudflare client
@@ -58,7 +56,7 @@ async function main() {
   // Sync Worker (if configured and enabled)
   let workerResult = null;
   if (deployWorker && config.worker) {
-    workerResult = await syncWorker(client, accountId, config, branch, workerSecrets, workingDir);
+    workerResult = await syncWorker(client, accountId, config, workerSecrets, workingDir);
   }
 
   // Summary
