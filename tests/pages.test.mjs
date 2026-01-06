@@ -23,6 +23,12 @@ describe('pages', () => {
         },
       },
     };
+    // Default mock for get after create/edit - returns subdomain from API
+    mockClient.pages.projects.get.mockResolvedValue({
+      name: 'my-project',
+      subdomain: 'my-project.pages.dev',
+      source: { type: 'github' },
+    });
     mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit called');
     });
@@ -49,7 +55,14 @@ describe('pages', () => {
     beforeEach(() => {
       const error = new Error('Not Found');
       error.status = 404;
-      mockClient.pages.projects.get.mockRejectedValue(error);
+      // First call returns 404, second call (after create) returns project with subdomain
+      mockClient.pages.projects.get
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          subdomain: 'my-project.pages.dev',
+          source: { type: 'github' },
+        });
     });
 
     it('should create a new project with GitHub integration', async () => {
@@ -80,14 +93,39 @@ describe('pages', () => {
       });
       expect(result).toEqual({ pagesUrl: 'https://my-project.pages.dev' });
     });
+
+    it('should use subdomain from API response for URL', async () => {
+      // Reset and override to return a custom subdomain (e.g., with prefix)
+      mockClient.pages.projects.get.mockReset();
+      const error = new Error('Not Found');
+      error.status = 404;
+      mockClient.pages.projects.get
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          subdomain: 'custom-prefix-my-project.pages.dev',
+          source: { type: 'github' },
+        });
+
+      const result = await syncPages(mockClient, 'account-id', baseConfig, false);
+
+      expect(result).toEqual({ pagesUrl: 'https://custom-prefix-my-project.pages.dev' });
+    });
   });
 
   describe('when project exists with GitHub source', () => {
     beforeEach(() => {
-      mockClient.pages.projects.get.mockResolvedValue({
-        name: 'my-project',
-        source: { type: 'github' },
-      });
+      // First call checks if project exists, second call after edit gets subdomain
+      mockClient.pages.projects.get
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          source: { type: 'github' },
+        })
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          subdomain: 'my-project.pages.dev',
+          source: { type: 'github' },
+        });
     });
 
     it('should update the existing project', async () => {
@@ -126,6 +164,18 @@ describe('pages', () => {
     });
 
     it('should delete and recreate with allow-recreate flag', async () => {
+      // First call returns direct_upload, second call after recreate returns subdomain
+      mockClient.pages.projects.get
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          source: { type: 'direct_upload' },
+        })
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          subdomain: 'my-project.pages.dev',
+          source: { type: 'github' },
+        });
+
       const result = await syncPages(mockClient, 'account-id', baseConfig, true);
 
       expect(mockClient.pages.projects.delete).toHaveBeenCalledWith('my-project', {
@@ -167,7 +217,13 @@ describe('pages', () => {
     beforeEach(() => {
       const error = new Error('Not Found');
       error.status = 404;
-      mockClient.pages.projects.get.mockRejectedValue(error);
+      mockClient.pages.projects.get
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          subdomain: 'my-project.pages.dev',
+          source: { type: 'github' },
+        });
     });
 
     it('should pass custom preview branch configuration', async () => {
@@ -198,7 +254,13 @@ describe('pages', () => {
     beforeEach(() => {
       const error = new Error('Not Found');
       error.status = 404;
-      mockClient.pages.projects.get.mockRejectedValue(error);
+      mockClient.pages.projects.get
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          subdomain: 'my-project.pages.dev',
+          source: { type: 'github' },
+        });
     });
 
     it('should pass custom build configuration', async () => {
@@ -225,6 +287,17 @@ describe('pages', () => {
     });
 
     it('should handle missing build config values', async () => {
+      // Reset and set up mocks for this specific test
+      const error = new Error('Not Found');
+      error.status = 404;
+      mockClient.pages.projects.get
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          subdomain: 'my-project.pages.dev',
+          source: { type: 'github' },
+        });
+
       const config = {
         ...baseConfig,
         build: {},
@@ -241,6 +314,26 @@ describe('pages', () => {
           },
         })
       );
+    });
+  });
+
+  describe('error when subdomain not in response', () => {
+    it('should throw error when subdomain is not available', async () => {
+      const error = new Error('Not Found');
+      error.status = 404;
+      mockClient.pages.projects.get
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce({
+          name: 'my-project',
+          source: { type: 'github' },
+          // No subdomain field
+        });
+
+      await expect(syncPages(mockClient, 'account-id', baseConfig, false))
+        .rejects.toThrow('Cloudflare API did not return subdomain field for Pages project');
+
+      // Verify the project was still created before the error
+      expect(mockClient.pages.projects.create).toHaveBeenCalled();
     });
   });
 });
